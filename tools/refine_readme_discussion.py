@@ -67,100 +67,26 @@ def savefig(path: Path):
     plt.close()
 
 
-def _format_heatmap_value(x, mode: str) -> str:
-    if pd.isna(x):
-        return ""
-
-    try:
-        x = float(x)
-    except Exception:
-        return str(x)
-
-    if mode == "large_small_values":
-        if x == 0:
-            return "0"
-        if abs(x) < 0.001:
-            return f"{x:.1e}"
-        return f"{x:.3g}"
-
-    if mode == "compact":
-        if x == 0:
-            return "0"
-        if abs(x) < 0.001:
-            return f"{x:.1e}"
-        return f"{x:.2g}"
-
-    return f"{x:.3g}"
-
-
-def _heatmap_annotation_mode(path: Path) -> str:
-    name = path.stem.lower()
-
-    # These had values too small to see clearly, so use larger annotation text.
-    large_annotation_heatmaps = [
-        "christoffersen_pvalue",
-        "kupiec_pvalue",
-        "coverage_error",
-    ]
-
-    # These had values going outside boxes, so use compact labels and smaller text.
-    compact_annotation_heatmaps = [
-        "summary_covp_heatmap",
-        "summary_crps_heatmap",
-        "summary_mae_heatmap",
-        "summary_qlike_heatmap",
-        "summary_rmse_heatmap",
-    ]
-
-    if any(k in name for k in large_annotation_heatmaps):
-        return "large_small_values"
-
-    if any(k in name for k in compact_annotation_heatmaps):
-        return "compact"
-
-    return "normal"
-
-
 def heatmap_plot(pivot: pd.DataFrame, title: str, path: Path, cmap: str = "viridis"):
     if pivot.empty:
         return
 
     rows, cols = pivot.shape
-    mode = _heatmap_annotation_mode(path)
+    fig_w = max(11, min(28, 2.2 + 0.95 * cols))
+    fig_h = max(4.5, min(18, 2.0 + 0.62 * rows))
 
-    if mode == "large_small_values":
-        # Larger annotation size for p-value and coverage-error heatmaps.
-        fig_w = max(13, min(32, 2.5 + 1.15 * cols))
-        fig_h = max(5.0, min(20, 2.4 + 0.75 * rows))
-        annot_size = 10.5
-        tick_size = max(6.5, min(9.5, 100 / max(cols, 1)))
-    elif mode == "compact":
-        # Smaller annotation size and compact number formatting for dense metric heatmaps.
-        fig_w = max(13, min(34, 2.8 + 1.05 * cols))
-        fig_h = max(5.0, min(20, 2.2 + 0.68 * rows))
-        annot_size = 4.2
-        tick_size = max(5.5, min(8.5, 90 / max(cols, 1)))
-    else:
-        fig_w = max(12, min(30, 2.5 + 1.0 * cols))
-        fig_h = max(4.8, min(18, 2.1 + 0.65 * rows))
-        annot_size = max(5.0, min(8.0, 90 / max(cols + rows, 1)))
-        tick_size = max(6.0, min(9.0, 95 / max(cols, 1)))
-
-    annot = pivot.copy()
-    fmt_mode = "compact" if mode == "compact" else "large_small_values" if mode == "large_small_values" else "normal"
-
-    for c in annot.columns:
-        annot[c] = annot[c].map(lambda x: _format_heatmap_value(x, fmt_mode))
+    annot_size = max(4.5, min(8.0, 80 / max(cols + rows, 1)))
+    tick_size = max(6.0, min(9.0, 95 / max(cols, 1)))
 
     plt.figure(figsize=(fig_w, fig_h))
 
     if sns is not None:
         sns.heatmap(
             pivot,
-            annot=annot,
-            fmt="",
+            annot=True,
+            fmt=".3g",
             cmap=cmap,
-            linewidths=0.55,
+            linewidths=0.45,
             linecolor="white",
             annot_kws={"size": annot_size},
             cbar_kws={"shrink": 0.72, "pad": 0.02},
@@ -170,9 +96,9 @@ def heatmap_plot(pivot: pd.DataFrame, title: str, path: Path, cmap: str = "virid
         plt.colorbar(shrink=0.72)
         for i in range(rows):
             for j in range(cols):
-                val = annot.iloc[i, j]
-                if val != "":
-                    plt.text(j, i, val, ha="center", va="center", fontsize=annot_size)
+                val = pivot.iloc[i, j]
+                if pd.notna(val):
+                    plt.text(j, i, f"{val:.3g}", ha="center", va="center", fontsize=annot_size)
         plt.xticks(range(cols), pivot.columns, rotation=45, ha="right")
         plt.yticks(range(rows), pivot.index)
 
@@ -181,7 +107,6 @@ def heatmap_plot(pivot: pd.DataFrame, title: str, path: Path, cmap: str = "virid
     plt.ylabel("")
     plt.xticks(rotation=45, ha="right", fontsize=tick_size)
     plt.yticks(rotation=0, fontsize=8)
-
     savefig(path)
 
 
