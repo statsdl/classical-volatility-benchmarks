@@ -162,14 +162,24 @@ def heatmap_80pct(pivot: pd.DataFrame, title: str, path: Path, cmap: str):
         mappable = ax.imshow(pivot.values, aspect="auto")
         fig.colorbar(mappable, ax=ax, shrink=0.72)
 
-    ax.set_title(title, fontsize=14)
+    # Keep title and axis/tick labels visually consistent with the other plots.
+    ax.set_title(title, fontsize=18, fontweight="bold", pad=18)
     ax.set_xlabel("")
     ax.set_ylabel("")
 
     ax.set_xticks(np.arange(cols) + 0.5)
     ax.set_yticks(np.arange(rows) + 0.5)
-    ax.set_xticklabels(pivot.columns, rotation=45, ha="right", fontsize=8)
-    ax.set_yticklabels(pivot.index, rotation=0, fontsize=8)
+    ax.set_xticklabels(pivot.columns, rotation=45, ha="right", fontsize=12)
+    ax.set_yticklabels(pivot.index, rotation=0, fontsize=12)
+
+    ax.tick_params(axis="both", which="major", labelsize=12)
+
+    # Keep colorbar labels readable as well.
+    try:
+        cbar = mappable.colorbar
+        cbar.ax.tick_params(labelsize=11)
+    except Exception:
+        pass
 
     add_80pct_annotations(ax, fig, pivot, mappable)
 
