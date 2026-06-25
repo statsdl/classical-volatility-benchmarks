@@ -224,8 +224,6 @@ def realized_measures(df: pd.DataFrame, window: int = 22) -> pd.DataFrame:
 # -----------------------------------------------------------------------------
 
 
-def forecast_naive(measures: pd.DataFrame, train_size: int) -> pd.Series:
-    return measures["RV"].shift(1).iloc[train_size:].rename("Naive-RV").clip(lower=EPS)
 
 
 def forecast_har(measures: pd.DataFrame, train_size: int, ridge_alpha: float = 1e-6) -> pd.Series:
@@ -697,7 +695,6 @@ def run_one_dataset(
     train_returns = returns.iloc[:train_size]
 
     forecasts: Dict[str, pd.Series] = {}
-    forecasts["Naive-RV"] = forecast_naive(measures, train_size)
     forecasts["HAR-RV"] = forecast_har(measures, train_size)
     forecasts.update(forecast_garch_family(returns, train_size))
     forecasts.update(forecast_realized_garch_models(measures, train_size))
