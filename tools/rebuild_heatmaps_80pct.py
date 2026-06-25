@@ -163,29 +163,45 @@ def heatmap_80pct(pivot: pd.DataFrame, title: str, path: Path, cmap: str):
         fig.colorbar(mappable, ax=ax, shrink=0.72)
 
     # Keep title and axis/tick labels visually consistent with the other plots.
-    ax.set_title(title, fontsize=18, fontweight="bold", pad=18)
+    # Make title and labels clearly visible like the other line/bar charts.
+    ax.set_title(title, fontsize=24, fontweight="bold", pad=24)
     ax.set_xlabel("")
     ax.set_ylabel("")
 
     ax.set_xticks(np.arange(cols) + 0.5)
     ax.set_yticks(np.arange(rows) + 0.5)
-    ax.set_xticklabels(pivot.columns, rotation=45, ha="right", fontsize=12)
-    ax.set_yticklabels(pivot.index, rotation=0, fontsize=12)
 
-    ax.tick_params(axis="both", which="major", labelsize=12)
+    ax.set_xticklabels(
+        pivot.columns,
+        rotation=45,
+        ha="right",
+        rotation_mode="anchor",
+        fontsize=15,
+        fontweight="medium",
+    )
+    ax.set_yticklabels(
+        pivot.index,
+        rotation=0,
+        fontsize=15,
+        fontweight="medium",
+    )
 
-    # Keep colorbar labels readable as well.
+    ax.tick_params(axis="both", which="major", labelsize=15, pad=6)
+
+    # Make colorbar labels readable too.
     try:
         cbar = mappable.colorbar
-        cbar.ax.tick_params(labelsize=11)
+        cbar.ax.tick_params(labelsize=14)
     except Exception:
         pass
 
     add_80pct_annotations(ax, fig, pivot, mappable)
 
-    fig.tight_layout()
+    # Give more room so title and tick labels stay visible.
+    fig.subplots_adjust(top=0.86, bottom=0.30, left=0.18, right=0.97)
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=240, bbox_inches="tight")
+    fig.savefig(path, dpi=260, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
